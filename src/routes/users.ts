@@ -1,6 +1,6 @@
-import { createUser, getUser } from "../controllers/users"
+import { createUser, getUser } from '../controllers/users'
 
-const Router = require('koa-router')
+import * as Router from 'koa-router'
 
 const router = new Router()
 

@@ -1,10 +1,11 @@
-const MongoClient = require('mongodb').MongoClient
+import * as MongoClient from 'mongodb'
+import { Collection } from 'mongoose'
 
 const url = 'mongodb://localhost:27017'
 const dbName = 'todolist'
 let db
 
-export async function connectToMongoDb() {
+export async function connectToMongoDb(): Promise<any> {
   try {
     const client = await MongoClient.connect(url)
     db = client.db(dbName)
@@ -14,7 +15,7 @@ export async function connectToMongoDb() {
   }
 }
 
-export function getCollection(collection) {
+export function getCollection(collection: string): Collection {
   if (!db) {
     console.log('Db is not connected')
   } else {
