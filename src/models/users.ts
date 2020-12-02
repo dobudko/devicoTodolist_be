@@ -1,22 +1,28 @@
-import { connectToMongoDb, getCollection } from '../db'
 import User from '../types/User'
+import mongoose from '../db/index'
 
-export const usersCollection = {
-  name: 'users',
+const Schema = mongoose.Schema
 
-  async insertUser(user: User): Promise<any> {
-    const client = await connectToMongoDb()
-    const collection = getCollection(this.name)
-    const result = collection.insertOne(user)
-    client.close()
-    return result
-  },
+const usersScheme = new Schema({
+  id: String,
+  login: String,
+  password: String,
+})
 
-  async getUser(login: string): Promise<any> {
-    const client = await connectToMongoDb()
-    const collection = getCollection(this.name)
-    const result = collection.findOne({ login: login })
-    client.close()
-    return result
-  },
+const Users = mongoose.model('users', usersScheme)
+
+export const insertOne = async (user: User): Promise<User> => {
+  let result
+  await Users.create({ ...user }).then((doc) => {
+    result = doc
+  })
+  return result
+}
+
+export const findOne = async (field: string, value: string): Promise<User> => {
+  let result
+  await Users.findOne({ [field]: value }).then((doc) => {
+    result = doc
+  })
+  return result
 }

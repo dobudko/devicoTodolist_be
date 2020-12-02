@@ -18,6 +18,6 @@ router.patch('/:id', editTodo)
 
 router.delete('/:id', deleteTodo)
 
-router.post('/clearCompletedTodos', clearCompleted)
+router.delete('/', clearCompleted)
 
 export default router.routes()
