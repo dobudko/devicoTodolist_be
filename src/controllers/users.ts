@@ -1,10 +1,14 @@
 import config from '../config'
-import * as jwt from 'jsonwebtoken'
 import * as bcrypt from 'bcrypt'
 import { v4 as uuidv4 } from 'uuid'
 import Context from '../types/Context'
 import jwtDecode from 'jwt-decode'
 import { findOne, insertOne } from '../models/users'
+import {
+  createTokens,
+  deleteRefreshTokenFromDb,
+  insertRefreshTokenToDb,
+} from '../util/tokenUtils'
 
 export const getUserByLogin = async (ctx: Context): Promise<any> => {
   const { login, password } = ctx.request.body
@@ -16,10 +20,17 @@ export const getUserByLogin = async (ctx: Context): Promise<any> => {
     ctx.status = 200
     ctx.body = { validation: 'password doesnt match' }
   } else {
+    const [refreshToken, accessToken] = createTokens(
+      { id: user.id },
+      config.jwtSecretRefreshKey + user.password
+    )
+    deleteRefreshTokenFromDb(user.id)
+    insertRefreshTokenToDb(refreshToken, user.id)
     ctx.status = 200
     ctx.body = {
       login: user.login,
-      token: jwt.sign(JSON.stringify({ id: user.id }), config.token),
+      accessToken: JSON.stringify(accessToken),
+      refreshToken: JSON.stringify(refreshToken),
     }
   }
 }
@@ -41,10 +52,17 @@ export const createUser = async (ctx: Context): Promise<any> => {
       password: hash,
     }
     const gotUser = await insertOne(user)
+    const [refreshToken, accessToken] = createTokens(
+      { id: gotUser.id },
+      config.jwtSecretRefreshKey + gotUser.password
+    )
+    deleteRefreshTokenFromDb(gotUser.id)
+    insertRefreshTokenToDb(refreshToken, gotUser.id)
     ctx.status = 200
     ctx.body = {
       login: gotUser.login,
-      token: jwt.sign(JSON.stringify({ id: gotUser.id }), config.token),
+      accessToken: accessToken,
+      refreshToken: refreshToken,
     }
   }
 }
@@ -53,9 +71,11 @@ export const getUserById = async (ctx: Context): Promise<any> => {
   const token = ctx.request.headers['authorization']
   let decodedToken
   let user
-  if (token !== 'null') {
+  if (token !== 'undefined') {
     decodedToken = jwtDecode(token)
-    user = await findOne('id', decodedToken['id'])
+    if (decodedToken.exp > Date.now() / 1000) {
+      user = await findOne('id', decodedToken['id'])
+    }
   }
   ctx.status = 200
   ctx.body = {

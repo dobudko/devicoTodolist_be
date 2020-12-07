@@ -1,28 +1,21 @@
 import User from '../types/User'
 import mongoose from '../db/index'
+import IUser from '../types/UserDoc'
 
-const Schema = mongoose.Schema
-
-const usersScheme = new Schema({
-  id: String,
-  login: String,
-  password: String,
+const usersScheme = new mongoose.Schema({
+  id: { type: String, required: true },
+  login: { type: String, required: true },
+  password: { type: String, required: true },
 })
 
-const Users = mongoose.model('users', usersScheme)
+const Users: mongoose.Model<IUser> = mongoose.model('users', usersScheme)
 
-export const insertOne = async (user: User): Promise<User> => {
-  let result
-  await Users.create({ ...user }).then((doc) => {
-    result = doc
-  })
+export const insertOne = async (user: User): Promise<IUser> => {
+  const result = await Users.create({ ...user })
   return result
 }
 
-export const findOne = async (field: string, value: string): Promise<User> => {
-  let result
-  await Users.findOne({ [field]: value }).then((doc) => {
-    result = doc
-  })
+export const findOne = async (field: string, value: string): Promise<IUser> => {
+  const result = await Users.findOne({ [field]: value })
   return result
 }

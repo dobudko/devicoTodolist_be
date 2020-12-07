@@ -7,15 +7,17 @@ import {
 } from '../models/todos'
 import { v4 as uuidv4 } from 'uuid'
 import Context from '../types/Context'
+import Todo from '../types/Todo'
 
 export const createTodo = async (ctx: Context): Promise<any> => {
-  const { title } = ctx.request.body
+  const { title, position } = ctx.request.body
   const { id: userId } = ctx.state
-  const todo = {
+  const todo: Todo = {
     id: uuidv4(),
     title: title,
     isCompleted: false,
     userId: userId,
+    position: position,
   }
   const createdTodo = await insertOne(todo)
   ctx.status = 200
@@ -39,14 +41,14 @@ export const editTodo = async (ctx: Context): Promise<any> => {
 
 export const deleteTodo = async (ctx: Context): Promise<any> => {
   const { id } = ctx.params
-  const promise = await deleteOne(id)
+  await deleteOne(id)
   ctx.status = 200
-  ctx.body = promise
+  ctx.body = { todoId: id }
 }
 
 export const clearCompleted = async (ctx: Context): Promise<any> => {
   const { id: userId } = ctx.state
-  const todos = await deleteMany(userId)
+  await deleteMany(userId)
   ctx.status = 200
-  ctx.body = todos
+  ctx.body = { userId }
 }
