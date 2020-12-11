@@ -7,6 +7,7 @@ import jwtDecode from 'jwt-decode'
 
 import userRouter from './src/routes/users'
 import todoRouter from './src/routes/todos'
+import todoListsRouter from './src/routes/todoLists'
 import Context from './src/types/Context'
 import {
   deleteRefreshTokenFromDb,
@@ -14,6 +15,7 @@ import {
 } from './src/util/tokenUtils'
 import { refreshToken as refresh } from './src/util/tokenUtils'
 import { findOne } from './src/models/users'
+import makeResponse from './src/util/makeResponse'
 
 const router = new Router()
 const privateRoutes = new Router()
@@ -60,10 +62,12 @@ const initApp = () => {
   refreshRouter.post('/refresh', refreshToken)
   router.use('/user', userRouter)
   privateRoutes.use('/todos', todoRouter)
+  privateRoutes.use('/lists', todoListsRouter)
 
   app.use(logger)
   app.use(cors())
   app.use(bodyParser())
+  app.use(makeResponse)
   app.use(router.routes())
   app.use(refreshRouter.routes())
   app.use(checkSecure)

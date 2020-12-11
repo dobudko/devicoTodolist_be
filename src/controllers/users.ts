@@ -14,11 +14,9 @@ export const getUserByLogin = async (ctx: Context): Promise<any> => {
   const { login, password } = ctx.request.body
   const user = await findOne('login', login)
   if (!user) {
-    ctx.status = 200
-    ctx.body = { validation: 'user with this login doesnt exist' }
+    ctx.ok({ validation: 'user with this login doesnt exist' })
   } else if (!bcrypt.compareSync(password, user.password)) {
-    ctx.status = 200
-    ctx.body = { validation: 'password doesnt match' }
+    ctx.ok({ validation: 'password doesnt match' })
   } else {
     const [refreshToken, accessToken] = createTokens(
       { id: user.id },
@@ -26,23 +24,20 @@ export const getUserByLogin = async (ctx: Context): Promise<any> => {
     )
     deleteRefreshTokenFromDb(user.id)
     insertRefreshTokenToDb(refreshToken, user.id)
-    ctx.status = 200
-    ctx.body = {
+    ctx.ok({
       login: user.login,
       accessToken: JSON.stringify(accessToken),
       refreshToken: JSON.stringify(refreshToken),
-    }
+    })
   }
 }
 
 export const createUser = async (ctx: Context): Promise<any> => {
   const { login, password } = ctx.request.body
   if (!password) {
-    ctx.status = 200
-    ctx.body = { validation: 'password is empty' }
+    ctx.ok({ validation: 'password is empty' })
   } else if (await findOne('login', login)) {
-    ctx.status = 200
-    ctx.body = { validation: 'user with this login is already exist' }
+    ctx.sok({ validation: 'user with this login is already exist' })
   } else {
     const salt = bcrypt.genSaltSync(parseInt(config.saltRounds))
     const hash = bcrypt.hashSync(password, salt)
@@ -58,12 +53,11 @@ export const createUser = async (ctx: Context): Promise<any> => {
     )
     deleteRefreshTokenFromDb(gotUser.id)
     insertRefreshTokenToDb(refreshToken, gotUser.id)
-    ctx.status = 200
-    ctx.body = {
+    ctx.ok({
       login: gotUser.login,
       accessToken: accessToken,
       refreshToken: refreshToken,
-    }
+    })
   }
 }
 
@@ -71,14 +65,13 @@ export const getUserById = async (ctx: Context): Promise<any> => {
   const token = ctx.request.headers['authorization']
   let decodedToken
   let user
-  if (token !== 'undefined') {
+  if (token !== 'undefined' && token !== 'null') {
     decodedToken = jwtDecode(token)
     if (decodedToken.exp > Date.now() / 1000) {
       user = await findOne('id', decodedToken['id'])
     }
   }
-  ctx.status = 200
-  ctx.body = {
+  ctx.ok({
     login: user ? user.login : null,
-  }
+  })
 }

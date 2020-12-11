@@ -1,4 +1,6 @@
-async function logger(ctx: any, next: any): Promise<void> {
+import Context from '../types/Context'
+
+async function logger(ctx: Context, next: any): Promise<void> {
   const start = Date.now()
   try {
     await next()

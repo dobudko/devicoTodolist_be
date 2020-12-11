@@ -3,14 +3,14 @@ import {
   createTodo,
   deleteTodo,
   editTodo,
-  getUserTodos,
+  getListTodos,
 } from '../controllers/todos'
 
 import * as Router from 'koa-router'
 
 const router = new Router()
 
-router.get('/', getUserTodos)
+router.get('/:id', getListTodos)
 
 router.post('/', createTodo)
 

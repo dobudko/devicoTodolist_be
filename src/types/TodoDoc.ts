@@ -4,7 +4,8 @@ interface ITodo extends Document {
   id: string
   title: string
   isCompleted: boolean
-  userId: string
+  listId: string
+  position: number
 }
 
 export default ITodo

@@ -2,7 +2,7 @@ interface Todo {
   id: string
   title: string
   isCompleted: boolean
-  userId: string
+  listId: string
   position: number
 }
 

@@ -1,7 +1,9 @@
 import {
+  deleteCompleted,
   deleteMany,
   deleteOne,
   findMany,
+  findOne,
   insertOne,
   updateOne,
 } from '../models/todos'
@@ -9,46 +11,53 @@ import { v4 as uuidv4 } from 'uuid'
 import Context from '../types/Context'
 import Todo from '../types/Todo'
 
-export const createTodo = async (ctx: Context): Promise<any> => {
-  const { title, position } = ctx.request.body
-  const { id: userId } = ctx.state
+export const createTodo = async (ctx: Context): Promise<void> => {
+  const { title, position, listId } = ctx.request.body
   const todo: Todo = {
     id: uuidv4(),
-    title: title,
+    title,
     isCompleted: false,
-    userId: userId,
-    position: position,
+    listId,
+    position,
   }
   const createdTodo = await insertOne(todo)
-  ctx.status = 200
-  ctx.body = createdTodo
+  ctx.ok(createdTodo)
 }
 
-export const getUserTodos = async (ctx: Context): Promise<any> => {
-  const { id: userId } = ctx.state
-  const todos = await findMany(userId)
-  ctx.status = 200
-  ctx.body = todos
+export const getListTodos = async (ctx: Context): Promise<void> => {
+  const { id: listId } = ctx.params
+  const todos = await findMany(listId)
+  ctx.ok(todos)
 }
 
-export const editTodo = async (ctx: Context): Promise<any> => {
+export const editTodo = async (ctx: Context): Promise<void> => {
   const { id } = ctx.params
   const { editedTodo } = ctx.request.body
   const promise = await updateOne(id, editedTodo)
-  ctx.status = 200
-  ctx.body = promise
+  ctx.ok(promise)
 }
 
-export const deleteTodo = async (ctx: Context): Promise<any> => {
+export const deleteTodo = async (ctx: Context): Promise<void> => {
   const { id } = ctx.params
-  await deleteOne(id)
-  ctx.status = 200
-  ctx.body = { todoId: id }
+  const todo = await findOne(id)
+  console.log(todo, id)
+  if (todo) {
+    await deleteOne(id)
+    ctx.ok({ todoId: id })
+  } else {
+    await deleteCompleted(id)
+    ctx.ok({ id })
+  }
 }
 
-export const clearCompleted = async (ctx: Context): Promise<any> => {
-  const { id: userId } = ctx.state
-  await deleteMany(userId)
-  ctx.status = 200
-  ctx.body = { userId }
+export const clearCompleted = async (ctx: Context): Promise<void> => {
+  const { listId } = ctx.request.body
+  await deleteCompleted(listId)
+  ctx.ok({ listId })
+}
+
+export const deleteListTodos = async (ctx: Context): Promise<void> => {
+  const { id: listId } = ctx.params
+  await deleteMany(listId)
+  ctx.ok({ listId })
 }
