@@ -4,6 +4,8 @@ import * as bodyParser from 'koa-body'
 import logger from './src/logger'
 import * as Router from 'koa-router'
 import jwtDecode from 'jwt-decode'
+import { createServer } from 'http'
+import { Server } from 'socket.io'
 
 import userRouter from './src/routes/users'
 import todoRouter from './src/routes/todos'
@@ -18,6 +20,7 @@ import { refreshToken as refresh } from './src/util/tokenUtils'
 import { findOne } from './src/models/users'
 import makeResponse from './src/util/makeResponse'
 import sharingAvailableUsersRouter from './src/routes/sharingAvailableUsers'
+import { findMany as getTodos } from './src/models/todos'
 
 const router = new Router()
 const privateRoutes = new Router()
@@ -80,4 +83,17 @@ const initApp = () => {
 }
 
 const app = initApp()
-app.listen(8080)
+const server = createServer(app.callback())
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+  },
+})
+
+io.on('connection', function (socket) {
+  socket.on('todo_is_changed', (listId: string) => {
+    io.sockets.emit('change_todos', listId)
+  })
+})
+
+server.listen(8080)

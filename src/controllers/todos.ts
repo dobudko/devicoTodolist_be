@@ -33,8 +33,10 @@ export const getListTodos = async (ctx: Context): Promise<void> => {
 export const editTodo = async (ctx: Context): Promise<void> => {
   const { id } = ctx.params
   const { editedTodo } = ctx.request.body
-  const promise = await updateOne(id, editedTodo)
-  ctx.ok(promise)
+  await updateOne(id, editedTodo)
+  await findOne(id).then((res) => {
+    ctx.ok(res)
+  })
 }
 
 export const deleteTodo = async (ctx: Context): Promise<void> => {
