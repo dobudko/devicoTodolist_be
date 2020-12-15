@@ -19,3 +19,8 @@ export const findOne = async (field: string, value: string): Promise<IUser> => {
   const result = await Users.findOne({ [field]: value })
   return result
 }
+
+export const findMany = async (): Promise<IUser[]> => {
+  const result = await Users.find({})
+  return result
+}

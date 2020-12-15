@@ -8,6 +8,7 @@ import jwtDecode from 'jwt-decode'
 import userRouter from './src/routes/users'
 import todoRouter from './src/routes/todos'
 import todoListsRouter from './src/routes/todoLists'
+import sharedListsRouter from './src/routes/sharedLists'
 import Context from './src/types/Context'
 import {
   deleteRefreshTokenFromDb,
@@ -16,6 +17,7 @@ import {
 import { refreshToken as refresh } from './src/util/tokenUtils'
 import { findOne } from './src/models/users'
 import makeResponse from './src/util/makeResponse'
+import sharingAvailableUsersRouter from './src/routes/sharingAvailableUsers'
 
 const router = new Router()
 const privateRoutes = new Router()
@@ -63,6 +65,8 @@ const initApp = () => {
   router.use('/user', userRouter)
   privateRoutes.use('/todos', todoRouter)
   privateRoutes.use('/lists', todoListsRouter)
+  privateRoutes.use('/sharedLists', sharedListsRouter)
+  privateRoutes.use('/sharingAvailableUsers', sharingAvailableUsersRouter)
 
   app.use(logger)
   app.use(cors())
