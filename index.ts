@@ -5,7 +5,7 @@ import logger from './src/logger'
 import * as Router from 'koa-router'
 import jwtDecode from 'jwt-decode'
 import { createServer } from 'http'
-import { Server } from 'socket.io'
+import { Server, Socket } from 'socket.io'
 
 import userRouter from './src/routes/users'
 import todoRouter from './src/routes/todos'
@@ -20,7 +20,12 @@ import { refreshToken as refresh } from './src/util/tokenUtils'
 import { findOne } from './src/models/users'
 import makeResponse from './src/util/makeResponse'
 import sharingAvailableUsersRouter from './src/routes/sharingAvailableUsers'
-import { findMany as getTodos } from './src/models/todos'
+import {
+  findOne as findTodo,
+  updateOne as updateTodo,
+} from './src/models/todos'
+import Todo from './src/types/Todo'
+import { socketsMap } from './src/socket'
 
 const router = new Router()
 const privateRoutes = new Router()
@@ -90,10 +95,30 @@ const io = new Server(server, {
   },
 })
 
+io.use((socket, next) => {
+  const userToken = socket.handshake.auth['token']
+  if (userToken) {
+    const userId: string = jwtDecode(userToken)['id']
+    if (socketsMap.has(userId)) {
+      const socketsId = socketsMap.get(userId)
+      socketsId.push(socket.id)
+    } else {
+      socketsMap.set(userId, [socket.id])
+    }
+  }
+  next()
+})
+
 io.on('connection', function (socket) {
-  socket.on('todo_is_changed', (listId: string) => {
-    io.sockets.emit('change_todos', listId)
+  socket.on('disconnect', () => {
+    socketsMap.forEach((value) => {
+      if (value.includes(socket.id)) {
+        value.splice(value.indexOf(socket.id), 1)
+      }
+    })
   })
 })
+
+export { io }
 
 server.listen(8080)
