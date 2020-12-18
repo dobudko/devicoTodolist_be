@@ -5,7 +5,8 @@ import logger from './src/logger'
 import * as Router from 'koa-router'
 import jwtDecode from 'jwt-decode'
 import { createServer } from 'http'
-import { Server, Socket } from 'socket.io'
+import { Server } from 'socket.io'
+import { v4 as uuidv4 } from 'uuid'
 
 import userRouter from './src/routes/users'
 import todoRouter from './src/routes/todos'
@@ -21,11 +22,10 @@ import { findOne } from './src/models/users'
 import makeResponse from './src/util/makeResponse'
 import sharingAvailableUsersRouter from './src/routes/sharingAvailableUsers'
 import {
-  findOne as findTodo,
-  updateOne as updateTodo,
-} from './src/models/todos'
-import Todo from './src/types/Todo'
-import { socketsMap } from './src/socket'
+  insertOne as insertSocket,
+  deleteOne as deleteSocket,
+} from './src/models/sockets'
+import Sockets from './src/types/Sockets'
 
 const router = new Router()
 const privateRoutes = new Router()
@@ -95,27 +95,23 @@ const io = new Server(server, {
   },
 })
 
-io.use((socket, next) => {
+io.use(async (socket, next) => {
   const userToken = socket.handshake.auth['token']
   if (userToken) {
     const userId: string = jwtDecode(userToken)['id']
-    if (socketsMap.has(userId)) {
-      const socketsId = socketsMap.get(userId)
-      socketsId.push(socket.id)
-    } else {
-      socketsMap.set(userId, [socket.id])
+    const newSocket: Sockets = {
+      id: uuidv4(),
+      userId,
+      socketId: socket.id,
     }
+    await insertSocket(newSocket)
   }
   next()
 })
 
 io.on('connection', function (socket) {
-  socket.on('disconnect', () => {
-    socketsMap.forEach((value) => {
-      if (value.includes(socket.id)) {
-        value.splice(value.indexOf(socket.id), 1)
-      }
-    })
+  socket.on('disconnect', async () => {
+    await deleteSocket(socket.id)
   })
 })
 
